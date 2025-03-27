@@ -13,21 +13,38 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Lernova",
-  description: "A smart platform for structured learning, assignment management, and seamless course material distribution.",
+  metadataBase: new URL("https://lernova.vercel.app"),
+  title: "Lernova - Smart Learning & Assignment Management",
+  description: "Transform your learning experience with Lernova: A smart platform for structured learning, assignment management, and seamless course material distribution.",
+  openGraph: {
+    title: "Lernova - Smart Learning Platform",
+    description: "Transform your learning experience with our AI-powered assignment management and course material distribution platform.",
+    url: "/",
+    siteName: "Lernova",
+    images: [
+      {
+        url: "https://raw.githubusercontent.com/pratikpatwe/Lernova/main/public/screenshot.png",
+        width: 1200,
+        height: 630,
+        alt: "Lernova - Smart Learning Platform Screenshot",
+      },
+    ],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Lernova - Smart Learning Platform",
+    description: "Transform your learning experience with our AI-powered assignment management and course material distribution platform.",
+    images: ["https://raw.githubusercontent.com/pratikpatwe/Lernova/main/public/screenshot.png"],
+  },
 };
-
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         {children}
       </body>
     </html>
