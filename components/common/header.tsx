@@ -1,8 +1,14 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Menu, X } from "lucide-react"
+import { Menu, X, ChevronLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import Link from "next/link"
+import {
+  SignedIn,
+  SignedOut,
+  UserButton,
+} from '@clerk/nextjs'
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -20,17 +26,31 @@ export default function Header() {
     <header
       className={`sticky top-0 z-50 w-full transition-all duration-300 ${scrolled ? "bg-white/95 shadow-sm backdrop-blur-sm" : "bg-transparent"}`}
     >
+
       <div className="container mx-auto flex items-center justify-between py-6 px-6 sm:px-8 lg:px-12">
-        <div className="flex items-center">
+        <Link href="/" className="flex items-center cursor-pointer group">
           <h1 className="text-xl font-bold uppercase tracking-wider text-gray-800">LERNOVA</h1>
-          <div className="ml-2 h-1 w-8 bg-red-500"></div>
-        </div>
+          <div className="relative ml-2 h-1 w-8 bg-red-500 transition-all duration-300 group-hover:opacity-0"></div>
+          <ChevronLeft
+            className="absolute ml-25 h-5 w-5 text-red-500 opacity-0 transition-all duration-300 group-hover:opacity-100"
+          />
+        </Link>
 
         {/* Mobile menu button */}
         <div className="flex items-center gap-2 md:hidden">
-          <Button size="sm" className="bg-orange-500 text-white hover:bg-orange-600">
-            Sign In
-          </Button>
+
+          <SignedOut>
+            <Button size="sm" className="bg-orange-500 text-white hover:bg-orange-600">
+              <Link href="/sign-in">
+                Sign In
+              </Link>
+            </Button>
+          </SignedOut>
+
+          <SignedIn>
+            <UserButton />
+          </SignedIn>
+
           <button className="ml-2" onClick={() => setIsMenuOpen(!isMenuOpen)}>
             {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
@@ -47,9 +67,19 @@ export default function Header() {
           <Button variant="ghost" size="sm" className="text-xs font-medium">
             FAQ
           </Button>
-          <Button size="sm" className="bg-orange-500 text-white hover:bg-orange-600">
-            Sign In
-          </Button>
+
+          <SignedOut>
+            <Button size="sm" className="bg-orange-500 text-white hover:bg-orange-600">
+              <Link href="/sign-in">
+                Sign In
+              </Link>
+            </Button>
+          </SignedOut>
+
+          <SignedIn>
+            <UserButton />
+          </SignedIn>
+
         </div>
       </div>
 

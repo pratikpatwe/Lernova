@@ -3,6 +3,25 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@keyframes gradient-x {
+
+  0%,
+  100% {
+    background-size: 200% 100%;
+    background-position: left center;
+  }
+
+  50% {
+    background-size: 200% 100%;
+    background-position: right center;
+  }
+}
+
+.animate-gradient-x {
+  animation: gradient-x 3s ease infinite;
+}
+
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -116,6 +135,7 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
