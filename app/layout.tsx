@@ -1,6 +1,9 @@
+import Header from "@/components/common/header"
+import Footer from "@/components/common/footer"
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { ClerkProvider } from "@clerk/nextjs";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,7 +17,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://lernova.vercel.app"),
-  title: "Lernova - Smart Learning & Assignment Management",
+  title: "Lernova - Organized Learning & Effortless Management",
   description: "Transform your learning experience with Lernova: A smart platform for structured learning, assignment management, and seamless course material distribution.",
   openGraph: {
     title: "Lernova - Smart Learning Platform",
@@ -43,10 +46,14 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        {children}
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en">
+        <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+          <Header />
+          {children}
+          <Footer />
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
