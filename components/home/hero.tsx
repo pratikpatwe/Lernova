@@ -5,7 +5,6 @@ import Link from "next/link"
 export default function Hero() {
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-orange-50 to-white py-20 px-6 sm:px-8 lg:px-12">
-      {/* Added z-index to ensure content is clickable */}
       <div className="container relative z-10 mx-auto grid grid-cols-1 items-center gap-8 md:grid-cols-2">
         <div className="space-y-6">
           <div className="inline-block rounded-full bg-orange-100 px-4 py-1 text-sm font-medium text-orange-600">
@@ -48,7 +47,6 @@ export default function Hero() {
         </div>
       </div>
 
-      {/* Decorative elements with lower z-index */}
       <div className="absolute -bottom-16 -left-16 h-64 w-64 rounded-full bg-pink-100 opacity-30 blur-3xl z-0"></div>
     </section>
   )
