@@ -58,15 +58,25 @@ export default function Header() {
 
         {/* Desktop navigation */}
         <div className="hidden items-center gap-4 md:flex">
-          <Button variant="ghost" size="sm" className="text-xs font-medium">
-            HELP
+
+          <Button variant="link" size="sm" className="text-xs font-medium hover:no-underline hover:bg-gray-100" asChild>
+            <Link href="/help">
+              Help
+            </Link>
           </Button>
-          <Button variant="ghost" size="sm" className="text-xs font-medium">
-            Features
+
+          <Button variant="link" size="sm" className="text-xs font-medium hover:no-underline hover:bg-gray-100" asChild>
+            <Link href="/#features">
+              Features
+            </Link>
           </Button>
-          <Button variant="ghost" size="sm" className="text-xs font-medium">
-            FAQ
+
+          <Button variant="link" size="sm" className="text-xs font-medium hover:no-underline hover:bg-gray-100" asChild>
+            <Link href="/#faq">
+              FAQ
+            </Link>
           </Button>
+
 
           <SignedOut>
             <Button size="sm" className="bg-orange-500 text-white hover:bg-orange-600">
@@ -99,6 +109,7 @@ export default function Header() {
           </div>
         </div>
       )}
+
     </header>
   )
 }

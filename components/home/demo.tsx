@@ -7,7 +7,7 @@ export default function Demo() {
   const [videoLoaded, setVideoLoaded] = useState(false)
 
   return (
-    <section className="bg-white py-20 px-6 sm:px-8 lg:px-12">
+    <section id="demo" className="bg-white py-20 px-6 sm:px-8 lg:px-12">
       <div className="container mx-auto">
         <div className="mb-10 text-center">
           <h2 className="mb-4 text-3xl font-bold">See LERNOVA in Action</h2>
