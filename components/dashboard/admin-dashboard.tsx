@@ -4,7 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Home, Users, GraduationCap, BookOpen, List, MessageSquareText, LogOut, PanelRightOpen, PanelRightClose } from 'lucide-react';
 import { UserButton } from '@clerk/nextjs';
 import { useState, useEffect } from 'react';
+
 import ManageTrainersDash from "@/components/dashboard/content/manage-trainer";
+import ManageStudentsDash from "@/components/dashboard/content/manage-students";
 
 export default function AdminDashboard() {
   const { user } = useUser();
@@ -60,7 +62,7 @@ export default function AdminDashboard() {
       case 'trainers':
         return <ManageTrainersDash />;
       case 'students':
-        return <div className="p-6">ManageStudentsDash component will render here</div>;
+        return <ManageStudentsDash />;
       case 'assignments':
         if (assignmentTab === 'stream') {
           return <div className="p-6">AssignmentsStream component will render here</div>;
