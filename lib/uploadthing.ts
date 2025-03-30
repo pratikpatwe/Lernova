@@ -12,9 +12,9 @@ export const ourFileRouter = {
     "application/vnd.openxmlformats-officedocument.presentationml.presentation": { maxFileSize: "8MB" }, // .pptx
     "application/vnd.ms-powerpoint": { maxFileSize: "8MB" }, // .ppt
     // Add additional PowerPoint-related MIME types for better compatibility
-    "application/powerpoint": { maxFileSize: "8MB" },
-    "application/mspowerpoint": { maxFileSize: "8MB" },
-    "application/x-mspowerpoint": { maxFileSize: "8MB" },
+    // Removed invalid MIME type "application/powerpoint" and "application/mspowerpoint"
+    // Ensure only valid MIME types are included
+    // Removed invalid MIME type "application/vnd.ms-powerpoint.presentation.macroEnabled.12"
     // Word files
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document": { maxFileSize: "8MB" }, // .docx
     "application/msword": { maxFileSize: "8MB" } // .doc
