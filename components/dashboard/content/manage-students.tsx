@@ -35,6 +35,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 // Firebase imports
 import { initializeApp, getApps } from "firebase/app"
@@ -73,6 +74,14 @@ type Student = {
   createdAt?: string
 }
 
+type Trainer = {
+  id: string
+  name: string
+  email: string
+  subject: string
+  batches: string[]
+}
+
 // Define FirebaseStudentData type
 type FirebaseStudentData = {
   name: string
@@ -106,6 +115,12 @@ export default function StudentManagementDash() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  // Add these state variables
+  const [trainers, setTrainers] = useState<Trainer[]>([])
+  const [subjects, setSubjects] = useState<string[]>([])
+  const [selectedSubject, setSelectedSubject] = useState<string>("")
+  const [filteredBatches, setFilteredBatches] = useState<string[]>([])
+
   // UI state
   const [searchQuery, setSearchQuery] = useState("")
   const [activeTab, setActiveTab] = useState("all-students")
@@ -131,11 +146,9 @@ export default function StudentManagementDash() {
     batches: [],
     creatorEmail: "",
   })
-  const [batchInput, setBatchInput] = useState("")
   const [editableBatches, setEditableBatches] = useState<string[]>([])
 
   // Notifications
-  const [batchRemovalNotice, setBatchRemovalNotice] = useState<string | null>(null)
   const [saveLoading, setSaveLoading] = useState(false)
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [notification, setNotification] = useState<{ type: "success" | "error"; message: string } | null>(null)
@@ -224,6 +237,68 @@ export default function StudentManagementDash() {
     return () => unsubscribe()
   }, [])
 
+  // Fetch trainers from Firebase
+  useEffect(() => {
+    const trainersRef = ref(database, "trainers")
+
+    const unsubscribe = onValue(
+      trainersRef,
+      (snapshot) => {
+        try {
+          if (snapshot.exists()) {
+            const trainersData = snapshot.val()
+            // Map Firebase data to Trainer array
+            const trainersArray: Trainer[] = Object.entries(trainersData).map(([id, data]: [string, unknown]) => {
+              const trainerData = data as {
+                name?: string
+                email?: string
+                subject?: string
+                batches?: Record<string, string>
+              }
+
+              return {
+                id,
+                name: trainerData.name || "",
+                email: trainerData.email || "",
+                subject: trainerData.subject || "",
+                batches: trainerData.batches ? Object.values(trainerData.batches) : [],
+              }
+            })
+            setTrainers(trainersArray)
+
+            // Extract unique subjects
+            const uniqueSubjects = Array.from(new Set(trainersArray.map((trainer) => trainer.subject).filter(Boolean)))
+            setSubjects(uniqueSubjects)
+          } else {
+            setTrainers([])
+            setSubjects([])
+          }
+        } catch (err) {
+          console.error("Error fetching trainers:", err)
+        }
+      },
+      (error) => {
+        console.error("Database error for trainers:", error)
+      },
+    )
+
+    // Clean up subscription on unmount
+    return () => unsubscribe()
+  }, [])
+
+  const handleSubjectChange = (subject: string) => {
+    setSelectedSubject(subject)
+
+    // Filter batches based on selected subject
+    const relevantTrainers = trainers.filter((trainer) => trainer.subject === subject)
+    const availableBatches = Array.from(new Set(relevantTrainers.flatMap((trainer) => trainer.batches))).filter(Boolean)
+
+    setFilteredBatches(availableBatches)
+
+    // Clear previously selected batches
+    setEditableBatches([])
+  }
+
   const openAddDialog = () => {
     setDialogMode("add")
     setCurrentStudent({
@@ -251,17 +326,9 @@ export default function StudentManagementDash() {
     setIsDialogOpen(true)
   }
 
-  const addBatch = () => {
-    if (batchInput.trim() && !editableBatches.includes(batchInput.trim())) {
-      setEditableBatches([...editableBatches, batchInput.trim()])
-      setBatchInput("")
-    }
-  }
-
   const removeBatch = (batch: string) => {
     setEditableBatches(editableBatches.filter((b) => b !== batch))
-    setBatchRemovalNotice(`Batch ${batch} removed successfully`)
-    setTimeout(() => setBatchRemovalNotice(null), 3000)
+    setNotification({ type: "success", message: `Batch ${batch} removed successfully` })
   }
 
   const saveStudent = async () => {
@@ -694,58 +761,91 @@ export default function StudentManagementDash() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label>Batches</Label>
-              <div className="flex gap-2">
-                <Input
-                  value={batchInput}
-                  onChange={(e) => setBatchInput(e.target.value)}
-                  placeholder="Enter batch (e.g. SOC1)"
-                  onKeyPress={(e) => e.key === "Enter" && addBatch()}
-                  className="border-gray-300 focus:border-orange-500"
-                />
-                <Button
-                  type="button"
-                  onClick={addBatch}
-                  variant="outline"
-                  className="border-gray-300 hover:bg-orange-50 hover:border-orange-200"
-                >
-                  Add
-                </Button>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Subject</Label>
+                <Select value={selectedSubject} onValueChange={handleSubjectChange}>
+                  <SelectTrigger className="border-gray-300 focus:border-orange-500">
+                    <SelectValue placeholder="Select a subject" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {subjects.length > 0 ? (
+                      subjects.map((subject) => (
+                        <SelectItem key={subject} value={subject}>
+                          {subject}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="loading" disabled>
+                        No subjects available
+                      </SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
               </div>
 
-              {/* Batch removal notification */}
-              {batchRemovalNotice && (
-                <Alert className="mt-2 bg-green-50 text-green-700 border-green-200">
-                  <AlertDescription>{batchRemovalNotice}</AlertDescription>
-                </Alert>
-              )}
+              <div className="space-y-2">
+                <Label>Batches</Label>
+                {selectedSubject ? (
+                  <>
+                    <Select
+                      value={editableBatches.length === 1 ? editableBatches[0] : ""}
+                      onValueChange={(batch) => {
+                        if (batch && !editableBatches.includes(batch)) {
+                          setEditableBatches([...editableBatches, batch])
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="border-gray-300 focus:border-orange-500">
+                        <SelectValue placeholder="Select a batch" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {filteredBatches.length > 0 ? (
+                          filteredBatches.map((batch) => (
+                            <SelectItem key={batch} value={batch}>
+                              {batch}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="none" disabled>
+                            No batches available for this subject
+                          </SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
 
-              <div className="mt-4">
-                <Label className="mb-2 block">Selected Batches: </Label>
-                <div className="flex flex-wrap gap-2 p-3 border rounded-md min-h-16">
-                  {editableBatches.length > 0 ? (
-                    editableBatches.map((batch) => (
-                      <Badge
-                        key={batch}
-                        variant="secondary"
-                        className="flex items-center gap-1 px-3 py-1.5 bg-orange-50 text-orange-600 border border-orange-100"
-                      >
-                        {batch}
-                        <span title={`Remove ${batch}`}>
-                          <X
-                            size={14}
-                            className="cursor-pointer ml-1 hover:text-red-500"
-                            onClick={() => removeBatch(batch)}
-                            aria-label={`Remove batch ${batch}`}
-                          />
-                        </span>
-                      </Badge>
-                    ))
-                  ) : (
-                    <span className="text-sm text-gray-400 italic">No batches selected</span>
-                  )}
-                </div>
+                    <div className="mt-4">
+                      <Label className="mb-2 block">Selected Batches: </Label>
+                      <div className="flex flex-wrap gap-2 p-3 border rounded-md min-h-16">
+                        {editableBatches.length > 0 ? (
+                          editableBatches.map((batch) => (
+                            <Badge
+                              key={batch}
+                              variant="secondary"
+                              className="flex items-center gap-1 px-3 py-1.5 bg-orange-50 text-orange-600 border border-orange-100"
+                            >
+                              {batch}
+                              <span title={`Remove ${batch}`}>
+                                <X
+                                  size={14}
+                                  className="cursor-pointer ml-1 hover:text-red-500"
+                                  onClick={() => removeBatch(batch)}
+                                  aria-label={`Remove batch ${batch}`}
+                                />
+                              </span>
+                            </Badge>
+                          ))
+                        ) : (
+                          <span className="text-sm text-gray-400 italic">No batches selected</span>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="p-3 border rounded-md bg-gray-50 text-gray-500 text-sm">
+                    Please select a subject first to view available batches
+                  </div>
+                )}
               </div>
             </div>
           </div>

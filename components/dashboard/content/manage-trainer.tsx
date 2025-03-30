@@ -1,5 +1,7 @@
-'use client';
-import { useState, useEffect } from 'react';
+"use client"
+import { useState, useEffect } from "react"
+import type React from "react"
+
 import {
   Search,
   Plus,
@@ -14,28 +16,27 @@ import {
   AlertTriangle,
   Loader2,
   Mail,
-  History // Add History icon import
-} from 'lucide-react';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
-import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useAuth, useUser } from "@clerk/nextjs"; // Import both useAuth and useUser hooks
+  History,
+} from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from "@/components/ui/dialog"
+import { Badge } from "@/components/ui/badge"
+import { Label } from "@/components/ui/label"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { useAuth, useUser } from "@clerk/nextjs" // Import both useAuth and useUser hooks
 
 // Firebase imports
-import { initializeApp } from "firebase/app";
-import {
-  getDatabase,
-  ref,
-  onValue,
-  set,
-  update,
-  remove,
-  push
-} from "firebase/database";
+import { initializeApp } from "firebase/app"
+import { getDatabase, ref, onValue, set, update, remove, push } from "firebase/database"
 
 // Your Firebase configuration
 const firebaseConfig = {
@@ -46,338 +47,365 @@ const firebaseConfig = {
   storageBucket: "lernova-3898e.firebasestorage.app",
   messagingSenderId: "367508505388",
   appId: "1:367508505388:web:7d64e3fecadf466a8ba289",
-  measurementId: "G-9LVG2JL1D2"
-};
+  measurementId: "G-9LVG2JL1D2",
+}
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const database = getDatabase(app);
+const app = initializeApp(firebaseConfig)
+const database = getDatabase(app)
 
 // Trainer type definition with creatorEmail field and editHistory
 type Trainer = {
-  id: string;
-  name: string;
-  subject: string;
-  batches: string[];
-  creatorEmail: string;
-  createdAt?: string;
-  editHistory?: EditHistory[]; // Add edit history array
-};
+  id: string
+  name: string
+  subject: string
+  email: string // Add email field
+  batches: string[]
+  creatorEmail: string
+  createdAt?: string
+  editHistory?: EditHistory[] // Add edit history array
+}
 
 // Define EditHistory type
 type EditHistory = {
-  editorEmail: string;
-  timestamp: string;
-  changedFields?: string[]; // Optional field to track what was changed
-};
+  editorEmail: string
+  timestamp: string
+  changedFields?: string[] // Optional field to track what was changed
+}
 
 // Define FirebaseTrainerData type
 type FirebaseTrainerData = {
-  name: string;
-  subject: string;
-  batches?: Record<string, string>;
-  creatorEmail: string;
-  createdAt?: string;
-  editHistory?: Record<string, EditHistory>; // Add history to Firebase data
-};
+  name: string
+  subject: string
+  email: string // Add email field
+  batches?: Record<string, string>
+  creatorEmail: string
+  createdAt?: string
+  editHistory?: Record<string, EditHistory> // Add history to Firebase data
+}
 
 export default function ManageTrainersDash() {
   // Get the current user from Clerk using both hooks
-  const { isLoaded: authLoaded } = useAuth();
-  const { user, isLoaded: userLoaded } = useUser();
+  const { isLoaded: authLoaded } = useAuth()
+  const { user, isLoaded: userLoaded } = useUser()
 
   // Get email only when user data is loaded
-  const userEmail = userLoaded ? user?.primaryEmailAddress?.emailAddress || '' : '';
+  const userEmail = userLoaded ? user?.primaryEmailAddress?.emailAddress || "" : ""
 
-  const [trainers, setTrainers] = useState<Trainer[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false); // Add History dialog state
-  const [trainerToDelete, setTrainerToDelete] = useState<string | null>(null);
-  const [selectedTrainerHistory, setSelectedTrainerHistory] = useState<EditHistory[]>([]); // Add selected trainer history
-  const [selectedTrainerName, setSelectedTrainerName] = useState<string>(''); // Add selected trainer name
-  const [dialogMode, setDialogMode] = useState<'add' | 'edit'>('add');
+  const [trainers, setTrainers] = useState<Trainer[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false) // Add History dialog state
+  const [trainerToDelete, setTrainerToDelete] = useState<string | null>(null)
+  const [selectedTrainerHistory, setSelectedTrainerHistory] = useState<EditHistory[]>([]) // Add selected trainer history
+  const [selectedTrainerName, setSelectedTrainerName] = useState<string>("") // Add selected trainer name
+  const [dialogMode, setDialogMode] = useState<"add" | "edit">("add")
   const [currentTrainer, setCurrentTrainer] = useState<Trainer>({
-    id: '',
-    name: '',
-    subject: '',
+    id: "",
+    name: "",
+    subject: "",
+    email: "", // Add empty email field
     batches: [],
-    creatorEmail: '',
-  });
-  const [batchInput, setBatchInput] = useState('');
-  const [editableBatches, setEditableBatches] = useState<string[]>([]);
-  const [batchRemovalNotice, setBatchRemovalNotice] = useState<string | null>(null);
-  const [saveLoading, setSaveLoading] = useState(false);
-  const [deleteLoading, setDeleteLoading] = useState(false);
-  const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+    creatorEmail: "",
+  })
+  const [batchInput, setBatchInput] = useState("")
+  const [editableBatches, setEditableBatches] = useState<string[]>([])
+  const [batchRemovalNotice, setBatchRemovalNotice] = useState<string | null>(null)
+  const [saveLoading, setSaveLoading] = useState(false)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [notification, setNotification] = useState<{ type: "success" | "error"; message: string } | null>(null)
 
   // Fetch trainers from Firebase
   useEffect(() => {
-    const trainersRef = ref(database, 'trainers');
+    const trainersRef = ref(database, "trainers")
 
-    setLoading(true);
-    const unsubscribe = onValue(trainersRef, (snapshot) => {
-      try {
-        if (snapshot.exists()) {
-          const trainersData = snapshot.val();
-          // Fixed: Type assertion to handle the mapping correctly
-          const trainersArray: Trainer[] = Object.entries(trainersData).map(([id, data]) => {
-            // Type assertion for the unknown data
-            const trainerData = data as FirebaseTrainerData;
+    setLoading(true)
+    const unsubscribe = onValue(
+      trainersRef,
+      (snapshot) => {
+        try {
+          if (snapshot.exists()) {
+            const trainersData = snapshot.val()
+            // Fixed: Type assertion to handle the mapping correctly
+            const trainersArray: Trainer[] = Object.entries(trainersData).map(([id, data]) => {
+              // Type assertion for the unknown data
+              const trainerData = data as FirebaseTrainerData
 
-            // Convert editHistory object to array if it exists
-            let editHistoryArray: EditHistory[] = [];
-            if (trainerData.editHistory) {
-              editHistoryArray = Object.values(trainerData.editHistory);
-              // Sort by timestamp descending (newest first)
-              editHistoryArray.sort((a, b) =>
-                new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-              );
-            }
+              // Convert editHistory object to array if it exists
+              let editHistoryArray: EditHistory[] = []
+              if (trainerData.editHistory) {
+                editHistoryArray = Object.values(trainerData.editHistory)
+                // Sort by timestamp descending (newest first)
+                editHistoryArray.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+              }
 
-            return {
-              id,
-              name: trainerData.name,
-              subject: trainerData.subject,
-              batches: trainerData.batches ? Object.values(trainerData.batches) : [],
-              creatorEmail: trainerData.creatorEmail || 'Unknown',
-              createdAt: trainerData.createdAt || '',
-              editHistory: editHistoryArray,
-            };
-          });
-          setTrainers(trainersArray);
-        } else {
-          setTrainers([]);
+              return {
+                id,
+                name: trainerData.name,
+                subject: trainerData.subject,
+                email: trainerData.email,
+                batches: trainerData.batches ? Object.values(trainerData.batches) : [],
+                creatorEmail: trainerData.creatorEmail || "Unknown",
+                createdAt: trainerData.createdAt || "",
+                editHistory: editHistoryArray,
+              }
+            })
+            setTrainers(trainersArray)
+          } else {
+            setTrainers([])
+          }
+          setError(null)
+        } catch (err) {
+          console.error("Error fetching trainers:", err)
+          setError("Failed to load trainers. Please try again later.")
+        } finally {
+          setLoading(false)
         }
-        setError(null);
-      } catch (err) {
-        console.error("Error fetching trainers:", err);
-        setError("Failed to load trainers. Please try again later.");
-      } finally {
-        setLoading(false);
-      }
-    }, (error) => {
-      console.error("Database error:", error);
-      setError("Failed to connect to the database. Please check your connection.");
-      setLoading(false);
-    });
+      },
+      (error) => {
+        console.error("Database error:", error)
+        setError("Failed to connect to the database. Please check your connection.")
+        setLoading(false)
+      },
+    )
 
     // Clean up subscription on unmount
-    return () => unsubscribe();
-  }, []);
+    return () => unsubscribe()
+  }, [])
 
   const openAddDialog = () => {
-    setDialogMode('add');
+    setDialogMode("add")
     setCurrentTrainer({
-      id: '',
-      name: '',
-      subject: '',
+      id: "",
+      name: "",
+      subject: "",
+      email: "", // Add empty email field
       batches: [],
-      creatorEmail: userEmail || 'Unknown'
-    });
-    setEditableBatches([]);
-    setIsDialogOpen(true);
-  };
+      creatorEmail: userEmail || "Unknown",
+    })
+    setEditableBatches([])
+    setIsDialogOpen(true)
+  }
 
   const openEditDialog = (trainer: Trainer) => {
-    setDialogMode('edit');
-    setCurrentTrainer({ ...trainer });
-    setEditableBatches(trainer.batches ? [...trainer.batches] : []);
-    setIsDialogOpen(true);
-  };
+    setDialogMode("edit")
+    setCurrentTrainer({ ...trainer })
+    setEditableBatches(trainer.batches ? [...trainer.batches] : [])
+    setIsDialogOpen(true)
+  }
 
   // New function to open history dialog
   const openHistoryDialog = (trainer: Trainer) => {
-    setSelectedTrainerHistory(trainer.editHistory || []);
-    setSelectedTrainerName(trainer.name);
-    setIsHistoryDialogOpen(true);
-  };
+    setSelectedTrainerHistory(trainer.editHistory || [])
+    setSelectedTrainerName(trainer.name)
+    setIsHistoryDialogOpen(true)
+  }
 
   const addBatch = () => {
     if (batchInput.trim() && !editableBatches.includes(batchInput.trim())) {
-      setEditableBatches([...editableBatches, batchInput.trim()]);
-      setBatchInput('');
+      setEditableBatches([...editableBatches, batchInput.trim()])
+      setBatchInput("")
     }
-  };
+  }
 
   const removeBatch = (batch: string) => {
-    setEditableBatches(editableBatches.filter((b) => b !== batch));
-    setBatchRemovalNotice(`Batch ${batch} removed successfully`);
-    setTimeout(() => setBatchRemovalNotice(null), 3000);
-  };
+    setEditableBatches(editableBatches.filter((b) => b !== batch))
+    setBatchRemovalNotice(`Batch ${batch} removed successfully`)
+    setTimeout(() => setBatchRemovalNotice(null), 3000)
+  }
 
   const saveTrainer = async () => {
     try {
-      setSaveLoading(true);
+      setSaveLoading(true)
 
       // Ensure we have the user email before saving
       if (!authLoaded || !userLoaded) {
-        throw new Error("User authentication data not loaded yet");
+        throw new Error("User authentication data not loaded yet")
       }
 
       // Get current timestamp
-      const timestamp = new Date().toISOString();
+      const timestamp = new Date().toISOString()
 
       // Prepare creator email - use the current email for new trainers,
       // preserve the existing one for edits
-      const creatorEmail = dialogMode === 'add'
-        ? userEmail || 'Unknown'
-        : currentTrainer.creatorEmail;
+      const creatorEmail = dialogMode === "add" ? userEmail || "Unknown" : currentTrainer.creatorEmail
 
       // Track changed fields for edit history (for existing trainers only)
-      const changedFields: string[] = [];
-      if (dialogMode === 'edit') {
-        if (currentTrainer.name !== trainers.find(t => t.id === currentTrainer.id)?.name) {
-          changedFields.push('name');
+      const changedFields: string[] = []
+      if (dialogMode === "edit") {
+        if (currentTrainer.name !== trainers.find((t) => t.id === currentTrainer.id)?.name) {
+          changedFields.push("name")
         }
-        if (currentTrainer.subject !== trainers.find(t => t.id === currentTrainer.id)?.subject) {
-          changedFields.push('subject');
+        if (currentTrainer.subject !== trainers.find((t) => t.id === currentTrainer.id)?.subject) {
+          changedFields.push("subject")
         }
-        if (JSON.stringify(editableBatches) !==
-          JSON.stringify(trainers.find(t => t.id === currentTrainer.id)?.batches)) {
-          changedFields.push('batches');
+        if (currentTrainer.email !== trainers.find((t) => t.id === currentTrainer.id)?.email) {
+          changedFields.push("email")
+        }
+        if (
+          JSON.stringify(editableBatches) !== JSON.stringify(trainers.find((t) => t.id === currentTrainer.id)?.batches)
+        ) {
+          changedFields.push("batches")
         }
       }
 
       // Create edit history entry if this is an edit
-      const historyEntry = dialogMode === 'edit' ? {
-        editorEmail: userEmail || 'Unknown',
-        timestamp: timestamp,
-        changedFields: changedFields
-      } : null;
+      const historyEntry =
+        dialogMode === "edit"
+          ? {
+            editorEmail: userEmail || "Unknown",
+            timestamp: timestamp,
+            changedFields: changedFields,
+          }
+          : null
 
       // Prepare trainer data
       const trainerData: FirebaseTrainerData = {
         name: currentTrainer.name,
         subject: currentTrainer.subject,
-        batches: editableBatches.reduce((acc, batch, index) => {
-          acc[index] = batch;
-          return acc;
-        }, {} as Record<number, string>),
+        email: currentTrainer.email, // Add email field
+        batches: editableBatches.reduce(
+          (acc, batch, index) => {
+            acc[index] = batch
+            return acc
+          },
+          {} as Record<number, string>,
+        ),
         creatorEmail: creatorEmail,
-        createdAt: dialogMode === 'add' ? timestamp : currentTrainer.createdAt || timestamp
-      };
+        createdAt: dialogMode === "add" ? timestamp : currentTrainer.createdAt || timestamp,
+      }
 
-      if (dialogMode === 'add') {
+      if (dialogMode === "add") {
         // Create new trainer
-        const newTrainerRef = push(ref(database, 'trainers'));
-        await set(newTrainerRef, trainerData);
-        setNotification({ type: 'success', message: 'Trainer added successfully!' });
+        const newTrainerRef = push(ref(database, "trainers"))
+        await set(newTrainerRef, trainerData)
+        setNotification({ type: "success", message: "Trainer added successfully!" })
       } else {
         // Get the existing trainer to access its history
-        const existingTrainer = trainers.find(t => t.id === currentTrainer.id);
+        const existingTrainer = trainers.find((t) => t.id === currentTrainer.id)
 
         // Only add to history if there were actual changes
         if (historyEntry && changedFields.length > 0) {
           // Convert existing history array back to object for Firebase
-          const existingHistory = existingTrainer?.editHistory || [];
-          const historyObject = existingHistory.reduce((acc, entry, index) => {
-            acc[index] = entry;
-            return acc;
-          }, {} as Record<number, EditHistory>);
+          const existingHistory = existingTrainer?.editHistory || []
+          const historyObject = existingHistory.reduce(
+            (acc, entry, index) => {
+              acc[index] = entry
+              return acc
+            },
+            {} as Record<number, EditHistory>,
+          )
 
           // Add new history entry
-          historyObject[Object.keys(historyObject).length] = historyEntry;
-          trainerData.editHistory = historyObject;
+          historyObject[Object.keys(historyObject).length] = historyEntry
+          trainerData.editHistory = historyObject
         } else if (existingTrainer?.editHistory) {
           // Preserve existing history if no changes
-          const historyObject = existingTrainer.editHistory.reduce((acc, entry, index) => {
-            acc[index] = entry;
-            return acc;
-          }, {} as Record<number, EditHistory>);
-          trainerData.editHistory = historyObject;
+          const historyObject = existingTrainer.editHistory.reduce(
+            (acc, entry, index) => {
+              acc[index] = entry
+              return acc
+            },
+            {} as Record<number, EditHistory>,
+          )
+          trainerData.editHistory = historyObject
         }
 
         // Update existing trainer
-        await update(ref(database, `trainers/${currentTrainer.id}`), trainerData);
-        setNotification({ type: 'success', message: 'Trainer updated successfully!' });
+        await update(ref(database, `trainers/${currentTrainer.id}`), trainerData)
+        setNotification({ type: "success", message: "Trainer updated successfully!" })
       }
     } catch (err) {
-      console.error("Error saving trainer:", err);
-      setNotification({ type: 'error', message: 'Failed to save trainer. Please try again.' });
+      console.error("Error saving trainer:", err)
+      setNotification({ type: "error", message: "Failed to save trainer. Please try again." })
     } finally {
-      setSaveLoading(false);
-      setIsDialogOpen(false);
+      setSaveLoading(false)
+      setIsDialogOpen(false)
 
       // Clear notification after 3 seconds
-      setTimeout(() => setNotification(null), 3000);
+      setTimeout(() => setNotification(null), 3000)
     }
-  };
+  }
 
   const confirmDeleteTrainer = (id: string) => {
-    setTrainerToDelete(id);
-    setIsDeleteDialogOpen(true);
-  };
+    setTrainerToDelete(id)
+    setIsDeleteDialogOpen(true)
+  }
 
   const deleteTrainer = async () => {
-    if (!trainerToDelete) return;
+    if (!trainerToDelete) return
 
     try {
-      setDeleteLoading(true);
-      await remove(ref(database, `trainers/${trainerToDelete}`));
-      setNotification({ type: 'success', message: 'Trainer deleted successfully!' });
+      setDeleteLoading(true)
+      await remove(ref(database, `trainers/${trainerToDelete}`))
+      setNotification({ type: "success", message: "Trainer deleted successfully!" })
     } catch (err) {
-      console.error("Error deleting trainer:", err);
-      setNotification({ type: 'error', message: 'Failed to delete trainer. Please try again.' });
+      console.error("Error deleting trainer:", err)
+      setNotification({ type: "error", message: "Failed to delete trainer. Please try again." })
     } finally {
-      setDeleteLoading(false);
-      setIsDeleteDialogOpen(false);
-      setTrainerToDelete(null);
+      setDeleteLoading(false)
+      setIsDeleteDialogOpen(false)
+      setTrainerToDelete(null)
 
       // Clear notification after 3 seconds
-      setTimeout(() => setNotification(null), 3000);
+      setTimeout(() => setNotification(null), 3000)
     }
-  };
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-  };
+    setSearchQuery(e.target.value)
+  }
 
   const handleBatchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setBatchInput(e.target.value);
-  };
+    setBatchInput(e.target.value)
+  }
 
   const handleTrainerNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCurrentTrainer({ ...currentTrainer, name: e.target.value });
-  };
+    setCurrentTrainer({ ...currentTrainer, name: e.target.value })
+  }
 
   const handleTrainerSubjectChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCurrentTrainer({ ...currentTrainer, subject: e.target.value });
-  };
+    setCurrentTrainer({ ...currentTrainer, subject: e.target.value })
+  }
+
+  const handleTrainerEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCurrentTrainer({ ...currentTrainer, email: e.target.value })
+  }
 
   // Format date from ISO string
   const formatDate = (dateString?: string) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
+    if (!dateString) return ""
+    const date = new Date(dateString)
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    })
+  }
 
   // Format date and time from ISO string for history display
   const formatDateTime = (dateString?: string) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
+    if (!dateString) return ""
+    const date = new Date(dateString)
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+  }
 
-  const filteredTrainers = trainers.filter(trainer =>
-    trainer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    trainer.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (trainer.creatorEmail && trainer.creatorEmail.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    trainer.batches.some(batch => batch.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const filteredTrainers = trainers.filter(
+    (trainer) =>
+      trainer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      trainer.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (trainer.creatorEmail && trainer.creatorEmail.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      trainer.batches.some((batch) => batch.toLowerCase().includes(searchQuery.toLowerCase())),
+  )
 
   return (
     <div className="p-6">
@@ -391,7 +419,9 @@ export default function ManageTrainersDash() {
 
       {/* Global notification */}
       {notification && (
-        <Alert className={`mb-4 ${notification.type === 'success' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
+        <Alert
+          className={`mb-4 ${notification.type === "success" ? "bg-green-50 text-green-700 border-green-200" : "bg-red-50 text-red-700 border-red-200"}`}
+        >
           <AlertDescription>{notification.message}</AlertDescription>
         </Alert>
       )}
@@ -419,8 +449,11 @@ export default function ManageTrainersDash() {
         </Alert>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredTrainers.map(trainer => (
-            <Card key={trainer.id} className="overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 border-gray-200 rounded-lg">
+          {filteredTrainers.map((trainer) => (
+            <Card
+              key={trainer.id}
+              className="overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 border-gray-200 rounded-lg"
+            >
               <CardHeader className="pb-4">
                 <div className="flex items-center">
                   <Award className="text-orange-500 mr-3" size={24} />
@@ -434,6 +467,11 @@ export default function ManageTrainersDash() {
                     <span className="text-sm font-medium text-gray-500 mr-2">Subject:</span>
                     <span className="text-gray-800 font-medium">{trainer.subject}</span>
                   </div>
+                  <div className="flex items-center">
+                    <Mail className="text-orange-400 mr-2" size={16} />
+                    <span className="text-sm font-medium text-gray-500 mr-2">Email:</span>
+                    <span className="text-gray-800 font-medium">{trainer.email || "Not provided"}</span>
+                  </div>
                   <div>
                     <div className="flex items-center mb-2">
                       <Tag className="text-orange-400 mr-2" size={16} />
@@ -441,8 +479,12 @@ export default function ManageTrainersDash() {
                     </div>
                     <div className="flex flex-wrap gap-2 mt-1 pl-6">
                       {trainer.batches && trainer.batches.length > 0 ? (
-                        trainer.batches.map(batch => (
-                          <Badge key={batch} variant="secondary" className="px-3 py-1.5 rounded-full bg-orange-50 text-orange-600 hover:bg-orange-100 transition-colors border border-orange-100">
+                        trainer.batches.map((batch) => (
+                          <Badge
+                            key={batch}
+                            variant="secondary"
+                            className="px-3 py-1.5 rounded-full bg-orange-50 text-orange-600 hover:bg-orange-100 transition-colors border border-orange-100"
+                          >
                             {batch}
                           </Badge>
                         ))
@@ -456,13 +498,11 @@ export default function ManageTrainersDash() {
                     <Mail className="text-gray-400 mr-2" size={15} />
                     <span className="text-sm font-medium text-gray-500 mr-2">Created by:</span>
                     <span className="text-sm text-gray-600">
-                      {trainer.creatorEmail === 'Unknown' ? 'Unknown' : trainer.creatorEmail}
+                      {trainer.creatorEmail === "Unknown" ? "Unknown" : trainer.creatorEmail}
                     </span>
                   </div>
                   {trainer.createdAt && (
-                    <div className="text-xs text-gray-400 mt-1 pl-6">
-                      Added on {formatDate(trainer.createdAt)}
-                    </div>
+                    <div className="text-xs text-gray-400 mt-1 pl-6">Added on {formatDate(trainer.createdAt)}</div>
                   )}
                 </div>
               </CardContent>
@@ -509,11 +549,9 @@ export default function ManageTrainersDash() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{dialogMode === 'add' ? 'Add New Trainer' : 'Edit Trainer'}</DialogTitle>
-            {dialogMode === 'add' && userEmail && (
-              <DialogDescription className="mt-2">
-                You will be recorded as the creator ({userEmail})
-              </DialogDescription>
+            <DialogTitle>{dialogMode === "add" ? "Add New Trainer" : "Edit Trainer"}</DialogTitle>
+            {dialogMode === "add" && userEmail && (
+              <DialogDescription className="mt-2">You will be recorded as the creator ({userEmail})</DialogDescription>
             )}
           </DialogHeader>
 
@@ -541,13 +579,25 @@ export default function ManageTrainersDash() {
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={currentTrainer.email}
+                onChange={handleTrainerEmailChange}
+                placeholder="Enter trainer's email"
+                className="border-gray-300 focus:border-orange-500"
+              />
+            </div>
+
+            <div className="space-y-2">
               <Label>Batches</Label>
               <div className="flex gap-2">
                 <Input
                   value={batchInput}
                   onChange={handleBatchInputChange}
                   placeholder="Enter batch (e.g. SOC1)"
-                  onKeyPress={(e) => e.key === 'Enter' && addBatch()}
+                  onKeyPress={(e) => e.key === "Enter" && addBatch()}
                   className="border-gray-300 focus:border-orange-500"
                 />
                 <Button
@@ -571,7 +621,7 @@ export default function ManageTrainersDash() {
                 <Label className="mb-2 block">Selected Batches: </Label>
                 <div className="flex flex-wrap gap-2 p-3 border rounded-md min-h-16">
                   {editableBatches.length > 0 ? (
-                    editableBatches.map(batch => (
+                    editableBatches.map((batch) => (
                       <Badge
                         key={batch}
                         variant="secondary"
@@ -602,7 +652,7 @@ export default function ManageTrainersDash() {
             </Button>
             <Button
               onClick={saveTrainer}
-              disabled={!currentTrainer.name || !currentTrainer.subject || saveLoading}
+              disabled={!currentTrainer.name || !currentTrainer.subject || !currentTrainer.email || saveLoading}
               className="bg-orange-500 hover:bg-orange-600"
             >
               {saveLoading ? (
@@ -613,7 +663,7 @@ export default function ManageTrainersDash() {
               ) : (
                 <>
                   <Save size={16} className="mr-2" />
-                  {dialogMode === 'add' ? 'Add Trainer' : 'Save Changes'}
+                  {dialogMode === "add" ? "Add Trainer" : "Save Changes"}
                 </>
               )}
             </Button>
@@ -642,11 +692,7 @@ export default function ManageTrainersDash() {
             >
               Cancel
             </Button>
-            <Button
-              onClick={deleteTrainer}
-              className="bg-red-500 hover:bg-red-600 text-white"
-              disabled={deleteLoading}
-            >
+            <Button onClick={deleteTrainer} className="bg-red-500 hover:bg-red-600 text-white" disabled={deleteLoading}>
               {deleteLoading ? (
                 <>
                   <Loader2 size={16} className="mr-2 animate-spin" />
@@ -680,7 +726,10 @@ export default function ManageTrainersDash() {
             {selectedTrainerHistory.length > 0 ? (
               <div className="space-y-4">
                 {selectedTrainerHistory.map((historyItem, index) => (
-                  <div key={index} className="border border-gray-200 rounded-lg p-4 bg-gray-50 hover:bg-blue-50 transition-colors">
+                  <div
+                    key={index}
+                    className="border border-gray-200 rounded-lg p-4 bg-gray-50 hover:bg-blue-50 transition-colors"
+                  >
                     <div className="flex justify-between items-start mb-2">
                       <div className="flex items-center">
                         <Mail className="text-blue-500 mr-2" size={16} />
@@ -695,7 +744,7 @@ export default function ManageTrainersDash() {
                       <div className="mt-2 pl-6">
                         <span className="text-sm text-gray-600">Changed:</span>
                         <div className="flex flex-wrap gap-2 mt-1">
-                          {historyItem.changedFields.map(field => (
+                          {historyItem.changedFields.map((field) => (
                             <Badge key={field} className="bg-blue-100 text-blue-700 border-blue-200">
                               {field.charAt(0).toUpperCase() + field.slice(1)}
                             </Badge>
@@ -703,9 +752,7 @@ export default function ManageTrainersDash() {
                         </div>
                       </div>
                     ) : (
-                      <div className="mt-2 pl-6 text-sm text-gray-500 italic">
-                        No field changes recorded
-                      </div>
+                      <div className="mt-2 pl-6 text-sm text-gray-500 italic">No field changes recorded</div>
                     )}
                   </div>
                 ))}
@@ -722,16 +769,13 @@ export default function ManageTrainersDash() {
           </div>
 
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsHistoryDialogOpen(false)}
-              className="border-gray-300"
-            >
+            <Button variant="outline" onClick={() => setIsHistoryDialogOpen(false)} className="border-gray-300">
               Close
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
-  );
+  )
 }
+

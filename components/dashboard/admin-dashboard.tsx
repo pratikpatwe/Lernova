@@ -5,8 +5,11 @@ import { Home, Users, GraduationCap, BookOpen, List, MessageSquareText, LogOut, 
 import { UserButton } from '@clerk/nextjs';
 import { useState, useEffect } from 'react';
 
+import AdminHome from "@/components/dashboard/content/admin-home";
 import ManageTrainersDash from "@/components/dashboard/content/manage-trainer";
 import ManageStudentsDash from "@/components/dashboard/content/manage-students";
+import AdminStream from "@/components/dashboard/content/admin-stream";
+import AdminAssignment from "@/components/dashboard/content/admin-assignment";
 
 export default function AdminDashboard() {
   const { user } = useUser();
@@ -65,13 +68,13 @@ export default function AdminDashboard() {
         return <ManageStudentsDash />;
       case 'assignments':
         if (assignmentTab === 'stream') {
-          return <div className="p-6">AssignmentsStream component will render here</div>;
+          return <AdminStream />;
         } else {
-          return <div className="p-6">AssignmentsList component will render here</div>;
+          return <AdminAssignment />;
         }
       case 'home':
       default:
-        return <div className="p-6">HomeDashboard component will render here</div>;
+        return <AdminHome />;
     }
   };
 
