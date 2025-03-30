@@ -22,12 +22,17 @@ interface FirebaseTrainerData {
   batches: string[] | Record<string, boolean>
 }
 
+interface FirebaseTimestamp {
+  seconds: number
+  nanoseconds: number
+}
+
 interface FirebaseAssignmentData {
   fileName: string
   fileUrl: string
   fileType: string
   status: 'pending' | 'checked'
-  submittedAt: number
+  submittedAt: number | FirebaseTimestamp
   feedback?: {
     text: string
     timestamp: number
@@ -37,6 +42,9 @@ interface FirebaseAssignmentData {
   trainerName: string
   studentEmail: string
   studentName: string
+  studentId?: string
+  batchId?: string
+  course?: string
 }
 
 interface Assignment {
@@ -45,7 +53,7 @@ interface Assignment {
   fileUrl: string
   fileType: string
   status: 'pending' | 'checked'
-  submittedAt: number
+  submittedAt: number | FirebaseTimestamp
   feedback?: {
     text: string
     timestamp: number
@@ -55,6 +63,18 @@ interface Assignment {
   trainerName: string
   studentEmail: string
   studentName: string
+  studentId?: string
+  batchId?: string
+  course?: string
+}
+
+// Mock current user data - in a real app, this would come from your auth system
+const currentUser = {
+  uid: 'student-123',
+  displayName: 'Current Student',
+  email: 'student@example.com',
+  batchId: 'batch-1',
+  course: 'Web Development'
 }
 
 export default function StudentAssignment() {
@@ -79,7 +99,16 @@ export default function StudentAssignment() {
             batches: Array.isArray(trainerData.batches) ? trainerData.batches : Object.keys(trainerData.batches || {})
           }
         })
-        setTrainers(trainersArray)
+
+        // Only show trainers for the student's batch if batchId is available
+        if (currentUser?.batchId) {
+          const filteredTrainers = trainersArray.filter(trainer =>
+            trainer.batches.includes(currentUser.batchId)
+          )
+          setTrainers(filteredTrainers.length > 0 ? filteredTrainers : trainersArray)
+        } else {
+          setTrainers(trainersArray)
+        }
       }
     })
 
@@ -88,17 +117,27 @@ export default function StudentAssignment() {
 
   useEffect(() => {
     if (selectedTrainer) {
+      // Get assignments
       const assignmentsRef = dbRef(database, `assignments/${selectedTrainer.id}`)
       const unsubscribe = onValue(assignmentsRef, (snapshot) => {
         if (snapshot.exists()) {
           const assignmentsData = snapshot.val()
-          const assignmentsArray = Object.entries(assignmentsData).map(([id, data]) => {
-            const assignmentData = data as FirebaseAssignmentData
-            return {
-              id,
-              ...assignmentData
-            }
-          })
+          const assignmentsArray = Object.entries(assignmentsData)
+            .map(([id, data]) => {
+              const assignmentData = data as FirebaseAssignmentData
+              return {
+                id,
+                ...assignmentData
+              }
+            })
+            // Filter to only show this student's assignments
+            .filter(assignment =>
+              // If studentId exists and matches current user
+              (assignment.studentId && assignment.studentId === currentUser.uid) ||
+              // Or if email matches (fallback)
+              (!assignment.studentId && assignment.studentEmail === currentUser.email)
+            )
+
           setAssignments(assignmentsArray)
         } else {
           setAssignments([])
@@ -139,8 +178,11 @@ export default function StudentAssignment() {
         submittedAt: serverTimestamp(),
         trainerEmail: selectedTrainer.email,
         trainerName: selectedTrainer.name,
-        studentEmail: 'current.student@example.com', // Replace with actual student email
-        studentName: 'Current Student', // Replace with actual student name
+        studentEmail: currentUser.email,
+        studentName: currentUser.displayName,
+        studentId: currentUser.uid,
+        batchId: currentUser.batchId,
+        course: currentUser.course
       }
 
       await set(newAssignmentRef, assignmentData)
@@ -153,21 +195,38 @@ export default function StudentAssignment() {
   }
 
   const getFileIcon = (fileType: string) => {
-    if (fileType.includes('image')) return <Image className="text-orange-600" size={20} />
-    if (fileType.includes('pdf')) return <FileText className="text-orange-600" size={20} />
-    if (fileType.includes('word') || fileType.includes('document')) return <File className="text-orange-600" size={20} />
-    if (fileType.includes('presentation') || fileType.includes('powerpoint')) return <FileType2 className="text-orange-600" size={20} />
-    return <File className="text-orange-600" size={20} />
+    if (fileType.includes('image')) return <Image className="text-orange-600" size={20} aria-hidden="true" />
+    if (fileType.includes('pdf')) return <FileText className="text-orange-600" size={20} aria-hidden="true" />
+    if (fileType.includes('word') || fileType.includes('document')) return <File className="text-orange-600" size={20} aria-hidden="true" />
+    if (fileType.includes('presentation') || fileType.includes('powerpoint')) return <FileType2 className="text-orange-600" size={20} aria-hidden="true" />
+    return <File className="text-orange-600" size={20} aria-hidden="true" />
   }
 
-  const formatDate = (timestamp: number) => {
-    return new Date(timestamp).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: 'numeric',
-      hour12: true
-    })
+  const formatDate = (timestamp: number | FirebaseTimestamp) => {
+    // Handle Firebase server timestamp object
+    if (timestamp && typeof timestamp === 'object' && 'seconds' in timestamp) {
+      const seconds = timestamp.seconds
+      return new Date(seconds * 1000).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        hour12: true
+      })
+    }
+
+    // Handle regular timestamp
+    if (typeof timestamp === 'number') {
+      return new Date(timestamp).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        hour12: true
+      })
+    }
+
+    return 'Date unknown'
   }
 
   return (
@@ -217,7 +276,7 @@ export default function StudentAssignment() {
               />
               {uploading && (
                 <div className="mt-4 flex items-center text-orange-600">
-                  <Loader2 className="animate-spin mr-2" size={20} />
+                  <Loader2 className="animate-spin mr-2" size={20} aria-hidden="true" />
                   <span>Uploading assignment...</span>
                 </div>
               )}
@@ -225,8 +284,23 @@ export default function StudentAssignment() {
 
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Pending Assignments</h3>
+              {assignments.filter(a => a.status === 'pending').length === 0 && (
+                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 text-gray-500 text-center">
+                  No pending assignments
+                </div>
+              )}
               {assignments
                 .filter(a => a.status === 'pending')
+                .sort((a, b) => {
+                  // Sort by submission date (newest first)
+                  const timeA = typeof a.submittedAt === 'number'
+                    ? a.submittedAt
+                    : a.submittedAt.seconds * 1000;
+                  const timeB = typeof b.submittedAt === 'number'
+                    ? b.submittedAt
+                    : b.submittedAt.seconds * 1000;
+                  return timeB - timeA;
+                })
                 .map((assignment) => (
                   <div key={assignment.id} className="bg-white p-4 rounded-lg border border-gray-200">
                     <div className="flex items-center justify-between">
@@ -235,6 +309,9 @@ export default function StudentAssignment() {
                         <div>
                           <h4 className="font-medium">{assignment.fileName}</h4>
                           <p className="text-sm text-gray-500">Submitted: {formatDate(assignment.submittedAt)}</p>
+                          {assignment.course && (
+                            <p className="text-sm text-gray-500">Course: {assignment.course}</p>
+                          )}
                         </div>
                       </div>
                       <a
@@ -253,8 +330,23 @@ export default function StudentAssignment() {
           </TabsContent>
 
           <TabsContent value="checked" className="space-y-4">
+            {assignments.filter(a => a.status === 'checked').length === 0 && (
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 text-gray-500 text-center">
+                No checked assignments
+              </div>
+            )}
             {assignments
               .filter(a => a.status === 'checked')
+              .sort((a, b) => {
+                // Sort by submission date (newest first)
+                const timeA = typeof a.submittedAt === 'number'
+                  ? a.submittedAt
+                  : a.submittedAt.seconds * 1000;
+                const timeB = typeof b.submittedAt === 'number'
+                  ? b.submittedAt
+                  : b.submittedAt.seconds * 1000;
+                return timeB - timeA;
+              })
               .map((assignment) => (
                 <div key={assignment.id} className="bg-white p-4 rounded-lg border border-gray-200">
                   <div className="flex items-center justify-between mb-4">
@@ -263,6 +355,9 @@ export default function StudentAssignment() {
                       <div>
                         <h4 className="font-medium">{assignment.fileName}</h4>
                         <p className="text-sm text-gray-500">Submitted: {formatDate(assignment.submittedAt)}</p>
+                        {assignment.course && (
+                          <p className="text-sm text-gray-500">Course: {assignment.course}</p>
+                        )}
                       </div>
                     </div>
                     <a
@@ -278,16 +373,20 @@ export default function StudentAssignment() {
 
                   <div className="border-t pt-4">
                     <h5 className="font-medium flex items-center gap-2 mb-2">
-                      <MessageSquare size={16} />
+                      <MessageSquare size={16} aria-hidden="true" />
                       Feedback
                     </h5>
-                    {assignment.feedback?.map((f, i) => (
-                      <div key={i} className="mb-2 text-sm">
-                        <p className="font-medium">{f.trainerName}</p>
-                        <p className="text-gray-600">{f.text}</p>
-                        <p className="text-xs text-gray-500">{formatDate(f.timestamp)}</p>
-                      </div>
-                    ))}
+                    {assignment.feedback && assignment.feedback.length > 0 ? (
+                      assignment.feedback.map((f, i) => (
+                        <div key={i} className="mb-2 text-sm">
+                          <p className="font-medium">{f.trainerName}</p>
+                          <p className="text-gray-600">{f.text}</p>
+                          <p className="text-xs text-gray-500">{formatDate(f.timestamp)}</p>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-gray-500">No feedback provided yet</p>
+                    )}
                   </div>
                 </div>
               ))}
