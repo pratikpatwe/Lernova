@@ -30,7 +30,7 @@ export default function Demo() {
             )}
             <iframe
               className="h-full w-full"
-              src="https://www.youtube.com/embed/5H6ST3okdtE"
+              src="https://www.youtube.com/embed/kDpu8kYuuRM"
               title="LERNOVA Platform Demo"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
