@@ -3,7 +3,7 @@ import { getDatabase } from "firebase/database";
 
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyDdMQvrvDyPplSg5ZkCz6i9bq1HQggXLQw",
+  apiKey: process.env.FB_API_KEY,
   authDomain: "lernova-3898e.firebaseapp.com",
   databaseURL: "https://lernova-3898e-default-rtdb.firebaseio.com",
   projectId: "lernova-3898e",
