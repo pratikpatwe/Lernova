@@ -1,7 +1,7 @@
 "use client"
 import { SignedIn, SignedOut, RedirectToSignIn, SignOutButton, useUser } from "@clerk/nextjs"
 import { Button } from "@/components/ui/button"
-import { Home, Upload, MessageSquareText, LogOut, PanelRightOpen, PanelRightClose } from "lucide-react"
+import { Home, Upload, MessageSquareText, LogOut, PanelRightOpen, PanelRightClose, BotMessageSquare } from "lucide-react"
 import { UserButton } from "@clerk/nextjs"
 import { useState, useEffect } from "react"
 
@@ -56,6 +56,8 @@ export default function StudentDashboard() {
         return <StudentStream />
       case "upload":
         return <UploadAssignment />
+      case "agent":
+        return <h2 className="m-2">AI agent for student help</h2>
       case "home":
       default:
         return <StudentHome />
@@ -123,6 +125,16 @@ export default function StudentDashboard() {
                   >
                     <Upload className="w-5 h-5" />
                     Upload Assignment
+                  </Button>
+                </li>
+                <li>
+                  <Button
+                    variant="ghost"
+                    className={`w-full justify-start text-left pl-3 flex items-center gap-3 text-gray-700 hover:bg-gray-100 ${activeComponent === "agent" ? "bg-orange-500 text-white" : ""} cursor-pointer`}
+                    onClick={() => handleNavClick("agent")}
+                  >
+                    <BotMessageSquare className="w-5 h-5" />
+                    LernoBot
                   </Button>
                 </li>
               </ul>
