@@ -1,5 +1,6 @@
 import { ChevronRight } from "lucide-react";
-import { SignInButton } from "@clerk/nextjs";
+import { SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
+import Link from "next/link";
 
 export default function Hero() {
   return (
@@ -44,14 +45,26 @@ export default function Hero() {
         </p>
 
         {/* CTA Button */}
-        <SignInButton>
-          <button className="group bg-[#FF5F02] hover:bg-[#E54E00] text-white font-semibold py-3 px-8 rounded-lg transition-all duration-300 transform hover:scale-105 mb-16 shadow-lg hover:shadow-xl hover:cursor-pointer">
-            <span className="flex items-center justify-center">
-              Get Started
-              <ChevronRight className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" />
-            </span>
-          </button>
-        </SignInButton>
+        <SignedOut>
+          <SignInButton mode="modal">
+            <button className="group bg-[#FF5F02] hover:bg-[#E54E00] text-white font-semibold py-3 px-8 rounded-lg transition-all duration-300 transform hover:scale-105 mb-16 shadow-lg hover:shadow-xl hover:cursor-pointer">
+              <span className="flex items-center justify-center">
+                Get Started
+                <ChevronRight className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" />
+              </span>
+            </button>
+          </SignInButton>
+        </SignedOut>
+        <SignedIn>
+          <Link href="/dashboard">
+            <button className="group bg-[#FF5F02] hover:bg-[#E54E00] text-white font-semibold py-3 px-8 rounded-lg transition-all duration-300 transform hover:scale-105 mb-16 shadow-lg hover:shadow-xl hover:cursor-pointer">
+              <span className="flex items-center justify-center">
+                Go to Dashboard
+                <ChevronRight className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" />
+              </span>
+            </button>
+          </Link>
+        </SignedIn>
 
         {/* Screenshot with curved corners */}
         <div className="w-full max-w-6xl mx-auto">
@@ -63,7 +76,6 @@ export default function Hero() {
             />
           </div>
         </div>
-.
       </div>
     </section>
   );
