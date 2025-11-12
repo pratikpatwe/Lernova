@@ -1,0 +1,73 @@
+<svg width="490" height="490" viewBox="0 0 490 490" fill="none" xmlns="http://www.w3.org/2000/svg">
+<mask id="mask0_1_424" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="490" height="490">
+<rect width="490" height="490" rx="120" fill="#D9D9D9"/>
+</mask>
+<g mask="url(#mask0_1_424)">
+<rect width="500" height="500" transform="translate(-5 -5)" fill="white"/>
+<rect x="-5" y="-5" width="500" height="500" fill="#FF5F02"/>
+<g opacity="0.5">
+<path d="M50.5 17H-333" stroke="white" stroke-width="2"/>
+<path d="M50.5 37H-333" stroke="white" stroke-width="2"/>
+<path d="M50.5 58H-333" stroke="white" stroke-width="2"/>
+<path d="M50.5 78H-333" stroke="white" stroke-width="2"/>
+<path d="M55.5 98H-328" stroke="white" stroke-width="2"/>
+<path d="M55.5 118H-328" stroke="white" stroke-width="2"/>
+<path d="M55.5 139H-328" stroke="white" stroke-width="2"/>
+<path d="M55.5 159H-328" stroke="white" stroke-width="2"/>
+<path d="M83.5 178H-300" stroke="white" stroke-width="2"/>
+<path d="M83.5 198H-300" stroke="white" stroke-width="2"/>
+<path d="M83.5 219H-300" stroke="white" stroke-width="2"/>
+<path d="M83.5 239H-300" stroke="white" stroke-width="2"/>
+<path d="M110.5 259H-273" stroke="white" stroke-width="2"/>
+<path d="M110.5 279H-273" stroke="white" stroke-width="2"/>
+<path d="M110.5 300H-273" stroke="white" stroke-width="2"/>
+<path d="M110.5 320H-273" stroke="white" stroke-width="2"/>
+<path d="M159 338H-252" stroke="white" stroke-width="2"/>
+<path d="M167 358H-244" stroke="white" stroke-width="2"/>
+<path d="M175 379H-236" stroke="white" stroke-width="2"/>
+<path d="M181 399H-230" stroke="white" stroke-width="2"/>
+<path d="M731 338H320" stroke="white" stroke-width="2"/>
+<path d="M640 358H229" stroke="white" stroke-width="2"/>
+<path d="M648 379H237" stroke="white" stroke-width="2"/>
+<path d="M654 399H243" stroke="white" stroke-width="2"/>
+<path d="M562 418H151" stroke="white" stroke-width="2"/>
+<path d="M576 438H165" stroke="white" stroke-width="2"/>
+<path d="M584 459H173" stroke="white" stroke-width="2"/>
+<path d="M590 479H179" stroke="white" stroke-width="2"/>
+</g>
+<g opacity="0.5">
+<path d="M116 218.5V-165" stroke="white" stroke-width="2"/>
+<path d="M96 153.5V-230" stroke="white" stroke-width="2"/>
+<path d="M75 118.5V-265" stroke="white" stroke-width="2"/>
+<path d="M55 118.5V-265" stroke="white" stroke-width="2"/>
+<path d="M199 357.5V-26" stroke="white" stroke-width="2"/>
+<path d="M179 357.5V-26" stroke="white" stroke-width="2"/>
+<path d="M158 357.5V-26" stroke="white" stroke-width="2"/>
+<path d="M138 357.5V-26" stroke="white" stroke-width="2"/>
+<path d="M280 358.5V-25" stroke="white" stroke-width="2"/>
+<path d="M260 358.5V-25" stroke="white" stroke-width="2"/>
+<path d="M239 358.5V-25" stroke="white" stroke-width="2"/>
+<path d="M219 358.5V-25" stroke="white" stroke-width="2"/>
+<path d="M359 358.5V-25" stroke="white" stroke-width="2"/>
+<path d="M339 358.5V-25" stroke="white" stroke-width="2"/>
+<path d="M318 358.5V-25" stroke="white" stroke-width="2"/>
+<path d="M298 358.5V-25" stroke="white" stroke-width="2"/>
+<path d="M439 358.5V-25" stroke="white" stroke-width="2"/>
+<path d="M419 358.5V-25" stroke="white" stroke-width="2"/>
+<path d="M398 358.5V-25" stroke="white" stroke-width="2"/>
+<path d="M378 358.5V-25" stroke="white" stroke-width="2"/>
+<path d="M479 343.5V-40" stroke="white" stroke-width="2"/>
+<path d="M459 343.5V-40" stroke="white" stroke-width="2"/>
+<path d="M80 798.5V415" stroke="white" stroke-width="2"/>
+<path d="M60 798.5V415" stroke="white" stroke-width="2"/>
+<path d="M39 798.5V415" stroke="white" stroke-width="2"/>
+<path d="M19 798.5V415" stroke="white" stroke-width="2"/>
+<path d="M160 798.5V415" stroke="white" stroke-width="2"/>
+<path d="M140 798.5V415" stroke="white" stroke-width="2"/>
+<path d="M119 798.5V415" stroke="white" stroke-width="2"/>
+<path d="M99 798.5V415" stroke="white" stroke-width="2"/>
+</g>
+<path d="M8 -33L134.524 328.323C147.861 366.411 187.48 388.602 226.926 380.079L504 320.207" stroke="white" stroke-width="50"/>
+<path d="M297 834L170.476 472.677C157.139 434.589 117.52 412.398 78.0745 420.921L-199 480.793" stroke="white" stroke-width="50"/>
+</g>
+</svg>
